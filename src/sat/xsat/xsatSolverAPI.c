@@ -32,7 +32,7 @@ ABC_NAMESPACE_IMPL_START
 
 xSAT_SolverOptions_t DefaultConfig =
 {
-    1,     //.fVerbose = 1,
+    0,     //.fVerbose = 1,
 
     0,     //.nConfLimit = 0,
     0,     //.nInsLimit = 0,

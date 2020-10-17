@@ -2017,8 +2017,8 @@ int sat_solver3_solve(sat_solver3* s, lit* begin, lit* end, ABC_INT64_T nConfLim
     if ( s->fSolved )
         return l_False;
 
-    if ( s->fVerbose )
-        printf( "Running SAT solver with parameters %d and %d and %d.\n", s->nLearntStart, s->nLearntDelta, s->nLearntRatio );
+    //if ( s->fVerbose )
+    //    printf( "Running SAT solver with parameters %d and %d and %d.\n", s->nLearntStart, s->nLearntDelta, s->nLearntRatio );
 
     sat_solver3_set_resource_limits( s, nConfLimit, nInsLimit, nConfLimitGlobal, nInsLimitGlobal );
 

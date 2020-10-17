@@ -47,6 +47,7 @@ ABC_NAMESPACE_IMPL_START
 ***********************************************************************/
 void Pdr_ManPrintProgress( Pdr_Man_t * p, int fClose, abctime Time )
 {
+    // printf("volulululululululululululululululululluululululululululululululullulu\n");
     Vec_Ptr_t * vVec;
     int i, ThisSize, Length, LengthStart;
     if ( Vec_PtrSize(p->vSolvers) < 2 )
@@ -89,10 +90,12 @@ void Pdr_ManPrintProgress( Pdr_Man_t * p, int fClose, abctime Time )
     }
     for ( i = ThisSize; i < 70; i++ )
         Abc_Print( 1, " " );
+    Abc_Print( 1, "\033[1;32m");
     Abc_Print( 1, "%5d", p->nQueMax );
+    Abc_Print( 1, "\033[0m");
     Abc_Print( 1, "%6d", p->vAbsFlops ? Vec_IntCountPositive(p->vAbsFlops) : p->nAbsFlops );
     if ( p->pPars->fUseAbs )
-    Abc_Print( 1, "%4d", p->nCexes );
+        Abc_Print( 1, "%4d", p->nCexes );
     Abc_Print( 1, "%10.2f sec", 1.0*Time/CLOCKS_PER_SEC );
     if ( p->pPars->fSolveAll )
         Abc_Print( 1, "  CEX =%4d", p->pPars->nFailOuts );

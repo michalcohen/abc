@@ -31,7 +31,7 @@ ABC_NAMESPACE_IMPL_START
 ////////////////////////////////////////////////////////////////////////
 ///                     FUNCTION DEFINITIONS                         ///
 ////////////////////////////////////////////////////////////////////////
-
+// region set related functions
 /**Function*************************************************************
 
   Synopsis    []
@@ -501,6 +501,9 @@ int Pdr_SetCompare( Pdr_Set_t ** pp1, Pdr_Set_t ** pp2 )
     return 0;
 }
 
+// endregion
+
+// region obligation related functions
 /**Function*************************************************************
 
   Synopsis    []
@@ -564,6 +567,9 @@ void Pdr_OblDeref( Pdr_Obl_t * p )
     }
 }
 
+// endregion
+
+// region queue related functions
 /**Function*************************************************************
 
   Synopsis    []
@@ -707,6 +713,233 @@ void Pdr_QueueStop( Pdr_Man_t * p )
     p->pQueue = NULL;
     p->nQueCur = 0;
 }
+// endregion
+
+// region graph related function
+
+Pdr_ListNodePred * Pdr_ListNodePredStart(Pdr_TreeNode * tn){
+    Pdr_ListNodePred * ln = ABC_ALLOC(Pdr_ListNodePred, 1);
+    ln->tree_node = Pdr_TreeNodeRef(tn);
+    ln->next = NULL;
+    return ln;
+}
+
+Pdr_TreeNode * Pdr_TreeNodeStart( Pdr_Set_t * pState, Pdr_TreeNode * pSucc )
+{
+    Pdr_TreeNode * tn;
+    tn = ABC_ALLOC( Pdr_TreeNode, 1 );
+
+
+    tn->nRefs  = 1;
+    tn->pState = Pdr_SetRef(pState);
+    tn->pSucc  = Pdr_TreeNodeRef(pSucc);
+    tn->pPred  = NULL;
+    if (pSucc)
+    {
+        Pdr_ListNodePred * pred = Pdr_ListNodePredStart(tn);
+        if (pSucc->pPred){
+            pred->next = pSucc->pPred;
+            pSucc->pPred = pred;
+        } else {
+            pSucc->pPred = pred;
+        }
+    }
+
+    return tn;
+}
+
+/**Function*************************************************************
+
+  Synopsis    []
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+Pdr_TreeNode * Pdr_TreeNodeRef( Pdr_TreeNode * tn )
+{
+    if ( !tn ){
+        return NULL;
+    }
+    tn->nRefs++;
+    return tn;
+}
+
+/**Function*************************************************************
+
+  Synopsis    []
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void Pdr_TreeNodeDeref( Pdr_TreeNode * tn )
+{
+    if ( --tn->nRefs == 0 )
+    {
+        if ( tn->pSucc )
+            Pdr_TreeNodeDeref( tn->pSucc );
+
+        for (Pdr_ListNodePred * p = tn->pPred; p;  p = p->next){
+           Pdr_TreeNodeDeref(p->tree_node);
+        }
+        Pdr_SetDeref( tn->pState );
+        ABC_FREE( tn );
+    }
+}
+
+
+/**Function*************************************************************
+
+  Synopsis    []
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+int Pdr_TreeIsEmpty( Pdr_Tree * t )
+{
+    return t == NULL;
+}
+
+/**Function*************************************************************
+
+  Synopsis    []
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+Pdr_TreeNode * Pdr_GetTreeRoot( Pdr_Tree * t )
+{
+    return t->root;
+}
+
+
+void _Pdr_TreeClean_Helper( Pdr_TreeNode * tn )
+{
+    if ( !tn ){
+        return;
+    }
+    for ( Pdr_ListNodePred * pPred = tn->pPred; pPred; )
+    {
+        _Pdr_TreeClean_Helper(pPred->tree_node);
+        Pdr_ListNodePred * tmp = pPred;
+        pPred = pPred->next;
+        ABC_FREE( tmp );
+    }
+    Pdr_SetDeref( tn->pState );
+    ABC_FREE( tn );
+}
+
+/**Function*************************************************************
+
+  Synopsis    []
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void Pdr_TreeClean( Pdr_Tree * t )
+{
+    Pdr_TreePrint( t->root, 0 );
+    fflush(stdout);
+    _Pdr_TreeClean_Helper(t->root);
+    ABC_FREE( t );
+}
+
+Pdr_TreeNode * Pdr_TreeFindNode(Pdr_TreeNode * current, Pdr_Set_t * state){
+    if ( ! current ){
+        return NULL;
+    }
+    if (current->pState == state){
+        return current;
+    }
+    for (Pdr_ListNodePred * p = current->pPred; p; p = p->next){
+        Pdr_TreeNode * res = Pdr_TreeFindNode(p->tree_node, state);
+        if ( res ){
+            return res;
+        }
+    }
+    return NULL;
+}
+/**Function*************************************************************
+
+  Synopsis    []
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void Pdr_TreeInsert( Pdr_Tree * t, Pdr_Set_t * state, Pdr_Set_t * succ )
+{
+    // maybe assert?
+    if (Pdr_TreeFindNode(t->root, state)){
+        return;
+    }
+    Pdr_TreeNode * tn_succ = Pdr_TreeFindNode(t->root, succ);
+    Pdr_TreeNode * tn_state = Pdr_TreeNodeStart(state, tn_succ);
+    if ( ! t->root ){
+        t->root = tn_state;
+    }
+}
+
+/**Function*************************************************************
+
+  Synopsis    []
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void Pdr_TreePrint( Pdr_TreeNode * tn, int level )
+{
+    if ( !tn ){
+        return;
+    }
+    for (int i = 0; i < level; i++) {
+
+        printf("\t");
+    }
+
+    printf("%p", tn->pState);
+    // Pdr_SetPrint( FILE * pFile, Pdr_Set_t * p, int nRegs, Vec_Int_t * vFlopCounts )
+    if ( !tn->pPred ) return;
+    for (Pdr_ListNodePred * pred = tn->pPred; pred; pred = pred->next) {
+        printf("\n");
+        Pdr_TreePrint(pred->tree_node, level + 1);
+    }
+}
+
+Pdr_Tree * Pdr_TreeStart(){
+    Pdr_Tree * t;
+    t = ABC_ALLOC( Pdr_Tree, 1 );
+    t->root = NULL;
+}
+// endregion
+
+
 
 
 #define PDR_VAL0  1
@@ -796,5 +1029,35 @@ int Pdr_NtkFindSatAssign_rec( Aig_Man_t * pAig, Aig_Obj_t * pNode, int Value, Pd
 ////////////////////////////////////////////////////////////////////////
 
 
+
+// [@Michal]
+void Pdr_Write_to_stats(Pdr_Man_t * p, const char * format, ...){
+    int max_path_size = 200;
+    va_list args;
+    va_start(args, format);
+    char cwd[max_path_size];
+    memset(cwd, 0, max_path_size);
+    strcat(cwd, "./");
+    strcat(cwd, p->pAig->pName);
+    strcat(cwd, "_");
+    strcat(cwd, "stats_michal.csv");
+    FILE *fp = fopen(cwd, "a+");
+    vfprintf(fp, format, args);
+    fclose(fp);
+}
+
+void Pdr_Initi_wrtie_to_stats(Pdr_Man_t * p){
+    int blooop = 5;
+    int max_path_size = 200;
+    char cwd[max_path_size];
+    memset(cwd, 0, max_path_size);
+    strcat(cwd, "./");
+    strcat(cwd, p->pAig->pName);
+    strcat(cwd, "_");
+    strcat(cwd, "stats_michal.csv");
+    FILE *fp = fopen(cwd, "w+");
+    fprintf(fp, "level,cube,depth\n");
+    fclose(fp);
+}
 ABC_NAMESPACE_IMPL_END
 

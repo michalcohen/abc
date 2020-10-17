@@ -1248,6 +1248,7 @@ sat_solver* zsat_solver_new_seed(double seed)
 //    s->binary                 = (clause*)ABC_ALLOC( char, sizeof(clause) + sizeof(lit)*2);
 //    s->binary->size_learnt    = (2 << 1);
     s->verbosity              = 0;
+    s->fVerbose               = 0;
 
     s->stats.starts           = 0;
     s->stats.decisions        = 0;
@@ -2080,8 +2081,8 @@ int sat_solver_solve(sat_solver* s, lit* begin, lit* end, ABC_INT64_T nConfLimit
     }
     ////////////////////////////////////////////////
 
-    if ( s->fVerbose )
-        printf( "Running SAT solver with parameters %d and %d and %d.\n", s->nLearntStart, s->nLearntDelta, s->nLearntRatio );
+    //if ( s->fVerbose )
+    //    printf( "Running SAT solver with parameters %d and %d and %d.\n", s->nLearntStart, s->nLearntDelta, s->nLearntRatio );
 
     sat_solver_set_resource_limits( s, nConfLimit, nInsLimit, nConfLimitGlobal, nInsLimitGlobal );
 

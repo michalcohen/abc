@@ -367,7 +367,8 @@ static inline void Abc_Print( int level, const char * format, ... )
 {
     extern ABC_DLL int Abc_FrameIsBridgeMode();
     va_list args;
-    extern unsigned enable_dbg_outs;  
+    extern unsigned enable_dbg_outs;
+
     if ( !enable_dbg_outs )
         return;
 

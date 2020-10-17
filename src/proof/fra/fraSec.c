@@ -471,120 +471,120 @@ ABC_PRT( "Time", Abc_Clock() - clkTotal );
     RetValue = Fra_FraigMiterStatus( pNew );
 
     // try interplation
-clk = Abc_Clock();
-    Aig_ManSetRegNum( pNew, Aig_ManRegNum(pNew) );
-    if ( pParSec->fInterpolation && RetValue == -1 && Aig_ManRegNum(pNew) > 0 )
-    {
-        Inter_ManParams_t Pars, * pPars = &Pars;
-        int Depth;
-        ABC_FREE( pNew->pSeqModel );
-        Inter_ManSetDefaultParams( pPars );
-//        pPars->nBTLimit = 100;
-        pPars->nBTLimit = pParSec->nBTLimitInter;
-        pPars->fVerbose = pParSec->fVeryVerbose;
-        if ( Saig_ManPoNum(pNew) == 1 )
-        {
-            RetValue = Inter_ManPerformInterpolation( pNew, pPars, &Depth );
-        }
-        else if ( pParSec->fInterSeparate )
-        {
-            Abc_Cex_t * pCex = NULL;
-            Aig_Man_t * pTemp, * pAux;
-            Aig_Obj_t * pObjPo;
-            int i, Counter = 0;
-            Saig_ManForEachPo( pNew, pObjPo, i )
-            { 
-                if ( Aig_ObjFanin0(pObjPo) == Aig_ManConst1(pNew) )
-                    continue;
-                if ( pPars->fVerbose )
-                    printf( "Solving output %2d (out of %2d):\n", i, Saig_ManPoNum(pNew) );
-                pTemp = Aig_ManDupOneOutput( pNew, i, 1 );
-                pTemp = Aig_ManScl( pAux = pTemp, 1, 1, 0, -1, -1, 0, 0 );
-                Aig_ManStop( pAux );
-                if ( Saig_ManRegNum(pTemp) > 0 )
-                {
-                    RetValue = Inter_ManPerformInterpolation( pTemp, pPars, &Depth );
-                    if ( pTemp->pSeqModel )
-                    {
-                        pCex = p->pSeqModel = Abc_CexDup( pTemp->pSeqModel, Aig_ManRegNum(p) );
-                        pCex->iPo = i;
-                        Aig_ManStop( pTemp );
-                        break;
-                    }
-                    // if solved, remove the output
-                    if ( RetValue == 1 )
-                    {
-                        Aig_ObjPatchFanin0( pNew, pObjPo, Aig_ManConst0(pNew) );
-    //                    printf( "Output %3d : Solved ", i );
-                    }
-                    else
-                    {
-                        Counter++;
-    //                    printf( "Output %3d : Undec  ", i );
-                    }
-                }
-                else
-                    Counter++;
-//                Aig_ManPrintStats( pTemp );
-                Aig_ManStop( pTemp );
-                printf( "Solving output %3d (out of %3d) using interpolation.\r", i, Saig_ManPoNum(pNew) );
-            }
-            Aig_ManCleanup( pNew );
-            if ( pCex == NULL )
-            {
-                printf( "Interpolation left %d (out of %d) outputs unsolved              \n", Counter, Saig_ManPoNum(pNew) );
-                if ( Counter )
-                    RetValue = -1;
-            }
-            pNew = Aig_ManDupUnsolvedOutputs( pTemp = pNew, 1 );
-            Aig_ManStop( pTemp );
-            pNew = Aig_ManScl( pTemp = pNew, 1, 1, 0, -1, -1, 0, 0 );
-            Aig_ManStop( pTemp );
-        }
-        else
-        {
-            Aig_Man_t * pNewOrpos = Saig_ManDupOrpos( pNew );
-            RetValue = Inter_ManPerformInterpolation( pNewOrpos, pPars, &Depth );
-            if ( pNewOrpos->pSeqModel )
-            {
-                Abc_Cex_t * pCex;
-                pCex = pNew->pSeqModel = pNewOrpos->pSeqModel; pNewOrpos->pSeqModel = NULL;
-                pCex->iPo = Saig_ManFindFailedPoCex( pNew, pNew->pSeqModel );
-            }
-            Aig_ManStop( pNewOrpos );
-        }
-
-        if ( pParSec->fVerbose )
-        {
-        if ( RetValue == 1 )
-            printf( "Property proved using interpolation.  " );
-        else if ( RetValue == 0 )
-            printf( "Property DISPROVED in frame %d using interpolation.  ", Depth );
-        else if ( RetValue == -1 )
-            printf( "Property UNDECIDED after interpolation.  " );
-        else
-            assert( 0 ); 
-ABC_PRT( "Time", Abc_Clock() - clk );
-        }
-    }
-
-    // try reachability analysis
-    if ( pParSec->fReachability && RetValue == -1 && Aig_ManRegNum(pNew) > 0 && Aig_ManRegNum(pNew) < pParSec->nBddVarsMax )
-    {
-        Saig_ParBbr_t Pars, * pPars = &Pars;
-        Bbr_ManSetDefaultParams( pPars );
-        pPars->TimeLimit     = 0;
-        pPars->nBddMax       = pParSec->nBddMax;
-        pPars->nIterMax      = pParSec->nBddIterMax;
-        pPars->fPartition    = 1;
-        pPars->fReorder      = 1;
-        pPars->fReorderImage = 1;
-        pPars->fVerbose      = 0;
-        pPars->fSilent       = pParSec->fSilent;
-        pNew->nTruePis = Aig_ManCiNum(pNew) - Aig_ManRegNum(pNew); 
-        pNew->nTruePos = Aig_ManCoNum(pNew) - Aig_ManRegNum(pNew); 
-        RetValue = Aig_ManVerifyUsingBdds( pNew, pPars );
-    }
+//clk = Abc_Clock();
+//    Aig_ManSetRegNum( pNew, Aig_ManRegNum(pNew) );
+//    if ( pParSec->fInterpolation && RetValue == -1 && Aig_ManRegNum(pNew) > 0 )
+//    {
+//        Inter_ManParams_t Pars, * pPars = &Pars;
+//        int Depth;
+//        ABC_FREE( pNew->pSeqModel );
+//        Inter_ManSetDefaultParams( pPars );
+////        pPars->nBTLimit = 100;
+//        pPars->nBTLimit = pParSec->nBTLimitInter;
+//        pPars->fVerbose = pParSec->fVeryVerbose;
+//        if ( Saig_ManPoNum(pNew) == 1 )
+//        {
+//            RetValue = Inter_ManPerformInterpolation( pNew, pPars, &Depth );
+//        }
+//        else if ( pParSec->fInterSeparate )
+//        {
+//            Abc_Cex_t * pCex = NULL;
+//            Aig_Man_t * pTemp, * pAux;
+//            Aig_Obj_t * pObjPo;
+//            int i, Counter = 0;
+//            Saig_ManForEachPo( pNew, pObjPo, i )
+//            {
+//                if ( Aig_ObjFanin0(pObjPo) == Aig_ManConst1(pNew) )
+//                    continue;
+//                if ( pPars->fVerbose )
+//                    printf( "Solving output %2d (out of %2d):\n", i, Saig_ManPoNum(pNew) );
+//                pTemp = Aig_ManDupOneOutput( pNew, i, 1 );
+//                pTemp = Aig_ManScl( pAux = pTemp, 1, 1, 0, -1, -1, 0, 0 );
+//                Aig_ManStop( pAux );
+//                if ( Saig_ManRegNum(pTemp) > 0 )
+//                {
+//                    RetValue = Inter_ManPerformInterpolation( pTemp, pPars, &Depth );
+//                    if ( pTemp->pSeqModel )
+//                    {
+//                        pCex = p->pSeqModel = Abc_CexDup( pTemp->pSeqModel, Aig_ManRegNum(p) );
+//                        pCex->iPo = i;
+//                        Aig_ManStop( pTemp );
+//                        break;
+//                    }
+//                    // if solved, remove the output
+//                    if ( RetValue == 1 )
+//                    {
+//                        Aig_ObjPatchFanin0( pNew, pObjPo, Aig_ManConst0(pNew) );
+//    //                    printf( "Output %3d : Solved ", i );
+//                    }
+//                    else
+//                    {
+//                        Counter++;
+//    //                    printf( "Output %3d : Undec  ", i );
+//                    }
+//                }
+//                else
+//                    Counter++;
+////                Aig_ManPrintStats( pTemp );
+//                Aig_ManStop( pTemp );
+//                printf( "Solving output %3d (out of %3d) using interpolation.\r", i, Saig_ManPoNum(pNew) );
+//            }
+//            Aig_ManCleanup( pNew );
+//            if ( pCex == NULL )
+//            {
+//                printf( "Interpolation left %d (out of %d) outputs unsolved              \n", Counter, Saig_ManPoNum(pNew) );
+//                if ( Counter )
+//                    RetValue = -1;
+//            }
+//            pNew = Aig_ManDupUnsolvedOutputs( pTemp = pNew, 1 );
+//            Aig_ManStop( pTemp );
+//            pNew = Aig_ManScl( pTemp = pNew, 1, 1, 0, -1, -1, 0, 0 );
+//            Aig_ManStop( pTemp );
+//        }
+//        else
+//        {
+//            Aig_Man_t * pNewOrpos = Saig_ManDupOrpos( pNew );
+//            RetValue = Inter_ManPerformInterpolation( pNewOrpos, pPars, &Depth );
+//            if ( pNewOrpos->pSeqModel )
+//            {
+//                Abc_Cex_t * pCex;
+//                pCex = pNew->pSeqModel = pNewOrpos->pSeqModel; pNewOrpos->pSeqModel = NULL;
+//                pCex->iPo = Saig_ManFindFailedPoCex( pNew, pNew->pSeqModel );
+//            }
+//            Aig_ManStop( pNewOrpos );
+//        }
+//
+//        if ( pParSec->fVerbose )
+//        {
+//        if ( RetValue == 1 )
+//            printf( "Property proved using interpolation.  " );
+//        else if ( RetValue == 0 )
+//            printf( "Property DISPROVED in frame %d using interpolation.  ", Depth );
+//        else if ( RetValue == -1 )
+//            printf( "Property UNDECIDED after interpolation.  " );
+//        else
+//            assert( 0 );
+//ABC_PRT( "Time", Abc_Clock() - clk );
+//        }
+//    }
+//
+//    // try reachability analysis
+//    if ( pParSec->fReachability && RetValue == -1 && Aig_ManRegNum(pNew) > 0 && Aig_ManRegNum(pNew) < pParSec->nBddVarsMax )
+//    {
+//        Saig_ParBbr_t Pars, * pPars = &Pars;
+//        Bbr_ManSetDefaultParams( pPars );
+//        pPars->TimeLimit     = 0;
+//        pPars->nBddMax       = pParSec->nBddMax;
+//        pPars->nIterMax      = pParSec->nBddIterMax;
+//        pPars->fPartition    = 1;
+//        pPars->fReorder      = 1;
+//        pPars->fReorderImage = 1;
+//        pPars->fVerbose      = 0;
+//        pPars->fSilent       = pParSec->fSilent;
+//        pNew->nTruePis = Aig_ManCiNum(pNew) - Aig_ManRegNum(pNew);
+//        pNew->nTruePos = Aig_ManCoNum(pNew) - Aig_ManRegNum(pNew);
+//        RetValue = Aig_ManVerifyUsingBdds( pNew, pPars );
+//    }
 
     // try PDR
     if ( pParSec->fUsePdr && RetValue == -1 && Aig_ManRegNum(pNew) > 0 )

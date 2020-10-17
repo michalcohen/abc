@@ -31,6 +31,8 @@
 #include "pdr.h" 
 #include "misc/hash/hashInt.h"
 #include "aig/gia/giaAig.h"
+#include "string.h"
+#include "unistd.h"
 
 //#define PDR_USE_SATOKO 1
 
@@ -90,6 +92,28 @@ struct Pdr_Obl_t_
     Pdr_Set_t * pState;    // state cube
     Pdr_Obl_t * pNext;     // next one
     Pdr_Obl_t * pLink;     // queue link
+};
+
+
+// Data structure to store graph of states
+typedef struct Pdr_ListNodePred_ Pdr_ListNodePred;
+typedef struct Pdr_TreeNode_ Pdr_TreeNode;
+typedef struct Pdr_Tree_ Pdr_Tree;
+
+struct Pdr_Tree_ {
+    Pdr_TreeNode* root;
+};
+
+struct Pdr_TreeNode_ {
+    Pdr_Set_t * pState;
+    Pdr_TreeNode * pSucc; // successor
+    Pdr_ListNodePred * pPred; // predecessors
+    int nRefs; // reference counter
+};
+
+struct Pdr_ListNodePred_ {
+    Pdr_TreeNode * tree_node;
+    Pdr_ListNodePred * next;
 };
 
 typedef struct Pdr_Man_t_ Pdr_Man_t;
@@ -191,6 +215,8 @@ static inline abctime      Pdr_ManTimeLimit( Pdr_Man_t * p )
     return p->timeToStopOne;
 }
 
+void Pdr_Write_to_stats(Pdr_Man_t * p, const char * format, ...); // @Michal
+void Pdr_Initi_wrtie_to_stats(Pdr_Man_t * p);
 ////////////////////////////////////////////////////////////////////////
 ///                    FUNCTION DECLARATIONS                         ///
 ////////////////////////////////////////////////////////////////////////
@@ -264,6 +290,18 @@ extern void            Pdr_QueuePush( Pdr_Man_t * p, Pdr_Obl_t * pObl );
 extern void            Pdr_QueuePrint( Pdr_Man_t * p );
 extern void            Pdr_QueueStop( Pdr_Man_t * p );
 
+extern Pdr_TreeNode *  Pdr_TreeNodeRef( Pdr_TreeNode * tn );
+extern Pdr_TreeNode *  Pdr_TreeNodeStart( Pdr_Set_t * pState, Pdr_TreeNode * pSucc );
+extern Pdr_TreeNode *  Pdr_TreeNodeRef( Pdr_TreeNode * tn );
+extern void            Pdr_TreeNodeDeref( Pdr_TreeNode * tn );
+extern int             Pdr_TreeIsEmpty( Pdr_Tree * t );
+extern Pdr_TreeNode *  Pdr_GetTreeRoot( Pdr_Tree * t );
+extern void            _Pdr_TreeClean_Helper( Pdr_TreeNode * tn );
+extern void            Pdr_TreeClean( Pdr_Tree * t );
+extern Pdr_TreeNode *  Pdr_TreeFindNode(Pdr_TreeNode * current, Pdr_Set_t * state);
+extern void            Pdr_TreeInsert( Pdr_Tree * t, Pdr_Set_t * state, Pdr_Set_t * succ );
+extern void            Pdr_TreePrint( Pdr_TreeNode * tn, int level );
+extern Pdr_Tree *      Pdr_TreeStart();
 ABC_NAMESPACE_HEADER_END
 
 

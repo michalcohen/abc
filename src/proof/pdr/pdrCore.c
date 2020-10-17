@@ -70,7 +70,7 @@ void Pdr_ManSetDefaultParams( Pdr_Par_t * pPars )
     pPars->fUsePropOut    =       1;  // use property output
     pPars->fSkipDown      =       1;  // apply down in generalization
     pPars->fCtgs          =       0;  // handle CTGs in down
-    pPars->fUseAbs        =       0;  // use abstraction 
+    pPars->fUseAbs        =       1;  // use abstraction
     pPars->fUseSimpleRef  =       0;  // simplified CEX refinement
     pPars->fVerbose       =       0;  // verbose output
     pPars->fVeryVerbose   =       0;  // very verbose output
@@ -891,34 +891,50 @@ int Pdr_ManGeneralize( Pdr_Man_t * p, int k, Pdr_Set_t * pCube, Pdr_Set_t ** ppP
   SeeAlso     []
 
 ***********************************************************************/
-int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube )
-{
-    Pdr_Obl_t * pThis;
-    Pdr_Set_t * pPred, * pCubeMin;
+
+void wrap_block_cube(Pdr_Man_t * p, Pdr_Set_t * pCube, Pdr_Tree * t){
+    Pdr_Write_to_stats(p, "%d,", p->nFrames);
+    Pdr_Write_to_stats(p, "%p,", pCube);
+    Pdr_Write_to_stats(p, "%d\n", p->nQueMax);
+    Pdr_TreeClean( t );
+}
+
+int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube ) {
+    Pdr_Obl_t *pThis;
+    Pdr_Set_t *pPred, *pCubeMin;
     int i, k, RetValue, Prio = ABC_INFINITY, Counter = 0;
-    int kMax = Vec_PtrSize(p->vSolvers)-1;
+    int kMax = Vec_PtrSize(p->vSolvers) - 1;
     abctime clk;
     p->nBlocks++;
     // create first proof obligation
-//    assert( p->pQueue == NULL );
-    pThis = Pdr_OblStart( kMax, Prio--, pCube, NULL ); // consume ref
-    Pdr_QueuePush( p, pThis );
+    //    assert( p->pQueue == NULL );
+    // inductive generalization
+    pThis = Pdr_OblStart(kMax, Prio--, pCube, NULL); // consume ref
+    Pdr_QueuePush(p, pThis);
+    // [@Michal]
+    Pdr_Tree *t = Pdr_TreeStart();
+    //Pdr_TreeInsert(t, pThis->pState, NULL);
     // try to solve it recursively
-    while ( !Pdr_QueueIsEmpty(p) )
-    {
+    while (!Pdr_QueueIsEmpty(p)) {
         Counter++;
-        pThis = Pdr_QueueHead( p );
-        if ( pThis->iFrame == 0 || (p->pPars->fUseAbs && Pdr_SetIsInit(pThis->pState, -1)) )
+        pThis = Pdr_QueueHead(p);
+        if (pThis->iFrame == 0 || (p->pPars->fUseAbs && Pdr_SetIsInit(pThis->pState, -1)))
+        {
+            wrap_block_cube(p, pCube, t);
             return 0; // SAT
-        if ( pThis->iFrame > kMax ) // finished this level
+        }
+        if ( pThis->iFrame > kMax ) { // finished this level
+            wrap_block_cube(p, pCube, t);
             return 1;
+        }
         if ( p->nQueLim && p->nQueCur >= p->nQueLim )
         {
             p->nQueLim = p->nQueLim * 3 / 2;
             Pdr_QueueStop( p );
+            wrap_block_cube(p, pCube, t);
             return 1; // restart
         }
-        pThis = Pdr_QueuePop( p );
+        pThis = Pdr_QueuePop( p );  // [@Michal extraction of s #106]
         assert( pThis->iFrame > 0 );
         assert( !Pdr_SetIsInit(pThis->pState, -1) );
         p->iUseFrame = Abc_MinInt( p->iUseFrame, pThis->iFrame );
@@ -932,24 +948,31 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube )
         p->tContain += Abc_Clock() - clk;
 
         // check if the cube is already contained
-        RetValue = Pdr_ManCheckCubeCs( p, pThis->iFrame, pThis->pState );
+        RetValue = Pdr_ManCheckCubeCs( p, pThis->iFrame, pThis->pState ); // [@Michal SAT(F_n \wedge T \wedge s' #108]
         if ( RetValue == -1 ) // resource limit is reached
         {
             Pdr_OblDeref( pThis );
+            wrap_block_cube(p, pCube, t);
             return -1;
         }
         if ( RetValue ) // cube is blocked by clauses in this frame
         {
-            Pdr_OblDeref( pThis );
+            Pdr_OblDeref( pThis ); // [@Michal shouldn't it be another inductive generalization as in #114?]
             continue;
         }
 
         // check if the cube holds with relative induction
         pCubeMin = NULL;
-        RetValue = Pdr_ManGeneralize( p, pThis->iFrame-1, pThis->pState, &pPred, &pCubeMin );
+        RetValue = Pdr_ManGeneralize( p, pThis->iFrame-1, pThis->pState, &pPred, &pCubeMin ); // [@Michal invocation of inductivelyGeneralize #111]
+        // [@Michal]
+        //if (pPred){
+        //    Pdr_TreeInsert(t, pPred, pThis->pState);
+        //}
+
         if ( RetValue == -1 ) // resource limit is reached
         {
             Pdr_OblDeref( pThis );
+            wrap_block_cube(p, pCube, t);
             return -1;
         }
         if ( RetValue ) // cube is blocked inductively in this frame
@@ -1014,15 +1037,24 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube )
         }
 
         // check termination
-        if ( p->pPars->pFuncStop && p->pPars->pFuncStop(p->pPars->RunId) )
+        if ( p->pPars->pFuncStop && p->pPars->pFuncStop(p->pPars->RunId) ) {
+            wrap_block_cube(p, pCube, t);
             return -1;
-        if ( p->timeToStop && Abc_Clock() > p->timeToStop )
+        }
+        if ( p->timeToStop && Abc_Clock() > p->timeToStop ) {
+            wrap_block_cube(p, pCube, t);
             return -1;
-        if ( p->timeToStopOne && Abc_Clock() > p->timeToStopOne )
+        }
+        if ( p->timeToStopOne && Abc_Clock() > p->timeToStopOne ) {
+            wrap_block_cube(p, pCube, t);
             return -1;
-        if ( p->pPars->nTimeOutGap && p->pPars->timeLastSolved && Abc_Clock() > p->pPars->timeLastSolved + p->pPars->nTimeOutGap * CLOCKS_PER_SEC )
+        }
+        if ( p->pPars->nTimeOutGap && p->pPars->timeLastSolved && Abc_Clock() > p->pPars->timeLastSolved + p->pPars->nTimeOutGap * CLOCKS_PER_SEC ) {
+            wrap_block_cube(p, pCube, t);
             return -1;
+        }
     }
+    wrap_block_cube(p, pCube, t);
     return 1;
 }
 
@@ -1061,6 +1093,8 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
     // create the first timeframe
     p->pPars->timeLastSolved = Abc_Clock();
     Pdr_ManCreateSolver( p, (iFrame = 0) );
+    Pdr_Initi_wrtie_to_stats(p);
+
     while ( 1 )
     {
         int fRefined = 0;
@@ -1131,6 +1165,7 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                 clkOne = Abc_Clock();
                 p->timeToStopOne = p->pTime4Outs[p->iOutCur] + Abc_Clock();
             }
+            // region [@Michal strengthen]
             while ( 1 )
             {
                 if ( p->pPars->nTimeOutGap && p->pPars->timeLastSolved && Abc_Clock() > p->pPars->timeLastSolved + p->pPars->nTimeOutGap * CLOCKS_PER_SEC )
@@ -1143,7 +1178,7 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                     return -1;
                 }
                 RetValue = Pdr_ManCheckCube( p, iFrame, NULL, &pCube, p->pPars->nConfLimit, 0, 1 );
-                if ( RetValue == 1 )
+                if ( RetValue == 1 ) // property holds for iframe
                     break;
                 if ( RetValue == -1 )
                 {
@@ -1166,8 +1201,9 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                     p->pPars->iFrame = iFrame;
                     return -1;
                 }
-                if ( RetValue == 0 )
+                if ( RetValue == 0 ) // property doesn't hold for this frame, pseudo counter example was found.
                 {
+                    // [@Michal pCube is s]
                     RetValue = Pdr_ManBlockCube( p, pCube );
                     if ( RetValue == -1 )
                     {
@@ -1245,6 +1281,7 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                         Pdr_ManPrintProgress( p, 0, Abc_Clock() - clkStart );
                 }
             }
+            // endregion
             if ( fRefined )
                 break;
             if ( p->pTime4Outs )
@@ -1286,6 +1323,7 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
             Abc_Print( 1, "*** Clauses after frame %d:\n", iFrame );
             Pdr_ManPrintClauses( p, 0 );
         }
+        // region [@Michal propagateClauses]
         // push clauses into this timeframe
         RetValue = Pdr_ManPushClauses( p );
         if ( RetValue == -1 )
@@ -1328,6 +1366,7 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                 return 0; // SAT
             return -1;
         }
+        // endregion
         if ( p->pPars->fVerbose )
             Pdr_ManPrintProgress( p, 0, Abc_Clock() - clkStart );
 
@@ -1396,7 +1435,7 @@ int Pdr_ManSolve( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     int k, RetValue;
     abctime clk = Abc_Clock();
     if ( pPars->nTimeOutOne && !pPars->fSolveAll )
-        pPars->nTimeOutOne = 0;
+        pPars->nTimeOutOne = 0; // If you don't want to find all counter examples, than time out should be 0??
     if ( pPars->nTimeOutOne && pPars->nTimeOut == 0 )
         pPars->nTimeOut = pPars->nTimeOutOne * Saig_ManPoNum(pAig) / 1000 + (int)((pPars->nTimeOutOne * Saig_ManPoNum(pAig) % 1000) > 0);
     if ( pPars->fVerbose )

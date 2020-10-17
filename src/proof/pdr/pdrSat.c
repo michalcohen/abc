@@ -281,6 +281,7 @@ int Pdr_ManCheckCubeCs( Pdr_Man_t * p, int k, Pdr_Set_t * pCube )
  
   Description [Return 1/0 if cube or property are proved to hold/fail
   in k-th timeframe.  Returns the predecessor bad state in ppPred.]
+  Returns -1 if timeout
                
   SideEffects []
 
@@ -346,7 +347,7 @@ int Pdr_ManCheckCube( Pdr_Man_t * p, int k, Pdr_Set_t * pCube, Pdr_Set_t ** ppPr
     clk = Abc_Clock() - clk;
     p->tSat += clk;
     assert( RetValue != l_Undef );
-    if ( RetValue == l_False )
+    if ( RetValue == l_False ) // no counter example to property on iFrame
     {
         p->tSatUnsat += clk;
         p->nCallsU++;
