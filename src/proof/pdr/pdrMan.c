@@ -20,6 +20,7 @@
 
 #include "pdrInt.h"
 #include "sat/bmc/bmc.h"
+#include "pdrInt.h"
 
 ABC_NAMESPACE_IMPL_START
 
@@ -255,6 +256,7 @@ Pdr_Man_t * Pdr_ManStart( Aig_Man_t * pAig, Pdr_Par_t * pPars, Vec_Int_t * vPrio
     p->vSolvers = Vec_PtrAlloc( 0 );
     p->vClauses = Vec_VecAlloc( 0 );
     p->pQueue   = NULL;
+    p->pTable = Pdr_CubeTableStart();
     p->pOrder   = ABC_ALLOC( int, Aig_ManRegNum(pAig) );
     p->vActVars = Vec_IntAlloc( 256 );
     if ( !p->pPars->fMonoCnf )

@@ -918,6 +918,7 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube ) {
     while (!Pdr_QueueIsEmpty(p)) {
         Counter++;
         pThis = Pdr_QueueHead(p);
+        Pdr_CubeTableUpdate(p->pTable, pThis->pState);
         if (pThis->iFrame == 0 || (p->pPars->fUseAbs && Pdr_SetIsInit(pThis->pState, -1)))
         {
             wrap_block_cube(p, pCube, t);

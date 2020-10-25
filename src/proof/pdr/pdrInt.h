@@ -33,6 +33,7 @@
 #include "aig/gia/giaAig.h"
 #include "string.h"
 #include "unistd.h"
+#include "stdbool.h"
 
 //#define PDR_USE_SATOKO 1
 
@@ -99,9 +100,21 @@ struct Pdr_Obl_t_
 typedef struct Pdr_ListNodePred_ Pdr_ListNodePred;
 typedef struct Pdr_TreeNode_ Pdr_TreeNode;
 typedef struct Pdr_Tree_ Pdr_Tree;
-
 struct Pdr_Tree_ {
     Pdr_TreeNode* root;
+};
+
+typedef struct Pdr_CubeTable_ Pdr_CubeTable;
+typedef struct Pdr_CubeTableNode_ Pdr_CubeTableNode;
+
+struct Pdr_CubeTable_ {
+    Pdr_CubeTableNode * first;
+};
+
+struct Pdr_CubeTableNode_ {
+    Pdr_Set_t * pState;
+    Pdr_CubeTableNode * next; // successor
+    int countRef; // reference counter
 };
 
 struct Pdr_TreeNode_ {
@@ -139,6 +152,7 @@ struct Pdr_Man_t_
     Vec_Ptr_t * vSolvers;  // SAT solvers
     Vec_Vec_t * vClauses;  // clauses by timeframe
     Pdr_Obl_t * pQueue;    // proof obligations
+    Pdr_CubeTable * pTable; // List of proof obligations and their number of references
     int *       pOrder;    // ordering of the lits
     Vec_Int_t * vActVars;  // the counter of activation variables
     int         iUseFrame; // the first used frame
@@ -292,16 +306,23 @@ extern void            Pdr_QueueStop( Pdr_Man_t * p );
 
 extern Pdr_TreeNode *  Pdr_TreeNodeRef( Pdr_TreeNode * tn );
 extern Pdr_TreeNode *  Pdr_TreeNodeStart( Pdr_Set_t * pState, Pdr_TreeNode * pSucc );
-extern Pdr_TreeNode *  Pdr_TreeNodeRef( Pdr_TreeNode * tn );
 extern void            Pdr_TreeNodeDeref( Pdr_TreeNode * tn );
 extern int             Pdr_TreeIsEmpty( Pdr_Tree * t );
 extern Pdr_TreeNode *  Pdr_GetTreeRoot( Pdr_Tree * t );
-extern void            _Pdr_TreeClean_Helper( Pdr_TreeNode * tn );
 extern void            Pdr_TreeClean( Pdr_Tree * t );
 extern Pdr_TreeNode *  Pdr_TreeFindNode(Pdr_TreeNode * current, Pdr_Set_t * state);
 extern void            Pdr_TreeInsert( Pdr_Tree * t, Pdr_Set_t * state, Pdr_Set_t * succ );
 extern void            Pdr_TreePrint( Pdr_TreeNode * tn, int level );
 extern Pdr_Tree *      Pdr_TreeStart();
+
+extern Pdr_CubeTable * Pdr_CubeTableStart();
+extern Pdr_CubeTableNode * Pdr_CubeTableNodeStart(Pdr_Set_t * state);
+extern void Pdr_CubeTableInsert(Pdr_CubeTable * t, Pdr_CubeTableNode * c);
+extern bool Are_states_identical(Pdr_Set_t * first, Pdr_Set_t * second);
+extern Pdr_CubeTableNode * Pdr_CubeTableFindNode(Pdr_CubeTableNode * current, Pdr_Set_t * state);
+extern void Pdr_CubeTableUpdate( Pdr_CubeTable * t, Pdr_Set_t * state);
+
+
 ABC_NAMESPACE_HEADER_END
 
 

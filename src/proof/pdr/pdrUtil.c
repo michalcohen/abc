@@ -19,6 +19,7 @@
 ***********************************************************************/
 
 #include "pdrInt.h"
+#include "stdbool.h"
 
 ABC_NAMESPACE_IMPL_START
 
@@ -937,9 +938,70 @@ Pdr_Tree * Pdr_TreeStart(){
     t = ABC_ALLOC( Pdr_Tree, 1 );
     t->root = NULL;
 }
+
+
 // endregion
 
+// region CubeHashTable
+Pdr_CubeTable * Pdr_CubeTableStart(){
+    Pdr_CubeTable * t;
+    t = ABC_ALLOC( Pdr_CubeTable, 1 );
+    t->first = NULL;
+}
 
+Pdr_CubeTableNode * Pdr_CubeTableNodeStart(Pdr_Set_t * state){
+    Pdr_CubeTableNode  * n = ABC_ALLOC(Pdr_CubeTableNode, 1);
+    n->pState = state;
+    Pdr_SetRef(state);
+    n->next = NULL;
+    n->countRef = 1;
+}
+
+void Pdr_CubeTableInsert(Pdr_CubeTable * t, Pdr_CubeTableNode * c){
+    if (!t->first){
+        t->first = c;
+    } else {
+        c->next = t->first;
+        t->first = c;
+    }
+}
+
+bool Are_states_identical(Pdr_Set_t * first, Pdr_Set_t * second){
+    if (first == second) {
+        return true; // They are the same object
+    }
+    if (first->nLits != second->nLits){
+        return false; // They have different amount of literals
+    }
+    for (int i = 0; i < first->nLits; i++){
+        if (first->Lits[i] != second->Lits[i]){
+            return false;
+        }
+    }
+    return true;
+}
+
+Pdr_CubeTableNode * Pdr_CubeTableFindNode(Pdr_CubeTableNode * current, Pdr_Set_t * state){
+    if ( ! current ){
+        return NULL;
+    }
+    if (Are_states_identical(current->pState, state)){
+        return current;
+    }
+    return Pdr_CubeTableFindNode(current->next, state);
+}
+
+void Pdr_CubeTableUpdate( Pdr_CubeTable * t, Pdr_Set_t * state)
+{
+    Pdr_CubeTableNode * ctn = Pdr_CubeTableFindNode(t->first, state);
+    if ( ctn ){
+        ctn->countRef++;
+    } else {
+        Pdr_CubeTableInsert(t, Pdr_CubeTableNodeStart(state));
+    }
+
+}
+// endregion
 
 
 #define PDR_VAL0  1
