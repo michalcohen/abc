@@ -718,22 +718,22 @@ void Pdr_QueueStop( Pdr_Man_t * p )
 
 // region graph related function
 
-Pdr_ListNodePred * Pdr_ListNodePredStart(Pdr_TreeNode * tn){
+Pdr_ListNodePred * Pdr_ListNodePredStart(Pdr_POGNode * tn){
     Pdr_ListNodePred * ln = ABC_ALLOC(Pdr_ListNodePred, 1);
-    ln->tree_node = Pdr_TreeNodeRef(tn);
+    ln->tree_node = Pdr_POGNodeRef(tn);
     ln->next = NULL;
     return ln;
 }
 
-Pdr_TreeNode * Pdr_TreeNodeStart( Pdr_Set_t * pState, Pdr_TreeNode * pSucc )
+Pdr_POGNode * Pdr_POGNodeStart(Pdr_Set_t * pState, Pdr_POGNode * pSucc )
 {
-    Pdr_TreeNode * tn;
-    tn = ABC_ALLOC( Pdr_TreeNode, 1 );
+    Pdr_POGNode * tn;
+    tn = ABC_ALLOC(Pdr_POGNode, 1 );
 
 
     tn->nRefs  = 1;
     tn->pState = Pdr_SetRef(pState);
-    tn->pSucc  = Pdr_TreeNodeRef(pSucc);
+    tn->pSucc  = Pdr_POGNodeRef(pSucc);
     tn->pPred  = NULL;
     if (pSucc)
     {
@@ -760,7 +760,7 @@ Pdr_TreeNode * Pdr_TreeNodeStart( Pdr_Set_t * pState, Pdr_TreeNode * pSucc )
   SeeAlso     []
 
 ***********************************************************************/
-Pdr_TreeNode * Pdr_TreeNodeRef( Pdr_TreeNode * tn )
+Pdr_POGNode * Pdr_POGNodeRef(Pdr_POGNode * tn )
 {
     if ( !tn ){
         return NULL;
@@ -780,15 +780,15 @@ Pdr_TreeNode * Pdr_TreeNodeRef( Pdr_TreeNode * tn )
   SeeAlso     []
 
 ***********************************************************************/
-void Pdr_TreeNodeDeref( Pdr_TreeNode * tn )
+void Pdr_POGNodeDeref(Pdr_POGNode * tn )
 {
     if ( --tn->nRefs == 0 )
     {
         if ( tn->pSucc )
-            Pdr_TreeNodeDeref( tn->pSucc );
+            Pdr_POGNodeDeref(tn->pSucc);
 
         for (Pdr_ListNodePred * p = tn->pPred; p;  p = p->next){
-           Pdr_TreeNodeDeref(p->tree_node);
+            Pdr_POGNodeDeref(p->tree_node);
         }
         Pdr_SetDeref( tn->pState );
         ABC_FREE( tn );
@@ -807,7 +807,7 @@ void Pdr_TreeNodeDeref( Pdr_TreeNode * tn )
   SeeAlso     []
 
 ***********************************************************************/
-int Pdr_TreeIsEmpty( Pdr_Tree * t )
+int Pdr_POGIsEmpty(Pdr_POG * t )
 {
     return t == NULL;
 }
@@ -823,13 +823,13 @@ int Pdr_TreeIsEmpty( Pdr_Tree * t )
   SeeAlso     []
 
 ***********************************************************************/
-Pdr_TreeNode * Pdr_GetTreeRoot( Pdr_Tree * t )
+Pdr_POGNode * Pdr_GetPOGRoot(Pdr_POG * t )
 {
     return t->root;
 }
 
 
-void _Pdr_TreeClean_Helper( Pdr_TreeNode * tn )
+void _Pdr_TreeClean_Helper(Pdr_POGNode * tn )
 {
     if ( !tn ){
         return;
@@ -856,15 +856,15 @@ void _Pdr_TreeClean_Helper( Pdr_TreeNode * tn )
   SeeAlso     []
 
 ***********************************************************************/
-void Pdr_TreeClean( Pdr_Tree * t )
+void Pdr_POGStop(Pdr_POG * t )
 {
-    Pdr_TreePrint( t->root, 0 );
+    Pdr_POGPrint(t->root, 0);
     fflush(stdout);
     _Pdr_TreeClean_Helper(t->root);
     ABC_FREE( t );
 }
 
-Pdr_TreeNode * Pdr_TreeFindNode(Pdr_TreeNode * current, Pdr_Set_t * state){
+Pdr_POGNode * Pdr_POGFindNode(Pdr_POGNode * current, Pdr_Set_t * state){
     if ( ! current ){
         return NULL;
     }
@@ -872,7 +872,7 @@ Pdr_TreeNode * Pdr_TreeFindNode(Pdr_TreeNode * current, Pdr_Set_t * state){
         return current;
     }
     for (Pdr_ListNodePred * p = current->pPred; p; p = p->next){
-        Pdr_TreeNode * res = Pdr_TreeFindNode(p->tree_node, state);
+        Pdr_POGNode * res = Pdr_POGFindNode(p->tree_node, state);
         if ( res ){
             return res;
         }
@@ -890,14 +890,14 @@ Pdr_TreeNode * Pdr_TreeFindNode(Pdr_TreeNode * current, Pdr_Set_t * state){
   SeeAlso     []
 
 ***********************************************************************/
-void Pdr_TreeInsert( Pdr_Tree * t, Pdr_Set_t * state, Pdr_Set_t * succ )
+void Pdr_POGInsert(Pdr_POG * t, Pdr_Set_t * state, Pdr_Set_t * succ )
 {
     // maybe assert?
-    if (Pdr_TreeFindNode(t->root, state)){
+    if (Pdr_POGFindNode(t->root, state)){
         return;
     }
-    Pdr_TreeNode * tn_succ = Pdr_TreeFindNode(t->root, succ);
-    Pdr_TreeNode * tn_state = Pdr_TreeNodeStart(state, tn_succ);
+    Pdr_POGNode * tn_succ = Pdr_POGFindNode(t->root, succ);
+    Pdr_POGNode * tn_state = Pdr_POGNodeStart(state, tn_succ);
     if ( ! t->root ){
         t->root = tn_state;
     }
@@ -914,7 +914,7 @@ void Pdr_TreeInsert( Pdr_Tree * t, Pdr_Set_t * state, Pdr_Set_t * succ )
   SeeAlso     []
 
 ***********************************************************************/
-void Pdr_TreePrint( Pdr_TreeNode * tn, int level )
+void Pdr_POGPrint(Pdr_POGNode * tn, int level )
 {
     if ( !tn ){
         return;
@@ -929,13 +929,13 @@ void Pdr_TreePrint( Pdr_TreeNode * tn, int level )
     if ( !tn->pPred ) return;
     for (Pdr_ListNodePred * pred = tn->pPred; pred; pred = pred->next) {
         printf("\n");
-        Pdr_TreePrint(pred->tree_node, level + 1);
+        Pdr_POGPrint(pred->tree_node, level + 1);
     }
 }
 
-Pdr_Tree * Pdr_TreeStart(){
-    Pdr_Tree * t;
-    t = ABC_ALLOC( Pdr_Tree, 1 );
+Pdr_POG * Pdr_POGStart(){
+    Pdr_POG * t;
+    t = ABC_ALLOC(Pdr_POG, 1 );
     t->root = NULL;
 }
 
@@ -955,6 +955,11 @@ Pdr_CubeTableNode * Pdr_CubeTableNodeStart(Pdr_Set_t * state){
     Pdr_SetRef(state);
     n->next = NULL;
     n->countRef = 1;
+}
+
+void Pdr_CubeTableNodeStop(Pdr_CubeTableNode * ctn){
+    Pdr_SetDeref(ctn->pState);
+    ABC_FREE(ctn);
 }
 
 void Pdr_CubeTableInsert(Pdr_CubeTable * t, Pdr_CubeTableNode * c){
@@ -991,15 +996,40 @@ Pdr_CubeTableNode * Pdr_CubeTableFindNode(Pdr_CubeTableNode * current, Pdr_Set_t
     return Pdr_CubeTableFindNode(current->next, state);
 }
 
-void Pdr_CubeTableUpdate( Pdr_CubeTable * t, Pdr_Set_t * state)
+void Pdr_CubeTableUpdate( Pdr_CubeTable * t, Pdr_POGNode * pog_node)
 {
-    Pdr_CubeTableNode * ctn = Pdr_CubeTableFindNode(t->first, state);
+    Pdr_CubeTableNode * ctn = Pdr_CubeTableFindNode(t->first, pog_node->pState);
     if ( ctn ){
         ctn->countRef++;
     } else {
-        Pdr_CubeTableInsert(t, Pdr_CubeTableNodeStart(state));
+        Pdr_CubeTableInsert(t, Pdr_CubeTableNodeStart(pog_node->pState));
+    }
+    for (Pdr_POGNode * succ = pog_node->pSucc; succ; succ = succ->pSucc){
+        Pdr_CubeTableNode * succ_ctn = Pdr_CubeTableFindNode(t->first, succ->pState);
+        if (! succ_ctn){
+            printf("check your table\n");
+            return;
+        }
+        succ_ctn->countRef++;
     }
 
+}
+
+void Pdr_TablePrint( Pdr_Man_t * p )
+{
+    Pdr_CubeTableNode * pNode;
+    for ( pNode = p->pTable->first; pNode; pNode = pNode->next )
+        Pdr_table_Write_to_stats(  p,"%p,%d\n", pNode->pState, pNode->countRef );
+}
+
+void Pdr_CubeTableStop(Pdr_CubeTable * t){
+    Pdr_CubeTableNode * pNode = t->first, * next = NULL;
+    while ( pNode ) {
+        next = pNode->next;
+        Pdr_CubeTableNodeStop(pNode);
+        pNode = next;
+    }
+    ABC_FREE(t);
 }
 // endregion
 
@@ -1108,8 +1138,9 @@ void Pdr_Write_to_stats(Pdr_Man_t * p, const char * format, ...){
     fclose(fp);
 }
 
-void Pdr_Initi_wrtie_to_stats(Pdr_Man_t * p){
-    int blooop = 5;
+
+
+void Pdr_Init_queue_write_to_stats(Pdr_Man_t * p){
     int max_path_size = 200;
     char cwd[max_path_size];
     memset(cwd, 0, max_path_size);
@@ -1121,5 +1152,41 @@ void Pdr_Initi_wrtie_to_stats(Pdr_Man_t * p){
     fprintf(fp, "level,cube,depth\n");
     fclose(fp);
 }
+
+
+void Pdr_Init_table_write_to_stats(Pdr_Man_t * p){
+    int max_path_size = 200;
+    char cwd[max_path_size];
+    memset(cwd, 0, max_path_size);
+    strcat(cwd, "./");
+    strcat(cwd, p->pAig->pName);
+    strcat(cwd, "_");
+    strcat(cwd, "stats_michal.csv");
+    FILE *fp = fopen(cwd, "w+");
+    fprintf(fp, "state,nRef\n");
+    fclose(fp);
+}
+
+
+void Pdr_table_Write_to_stats(Pdr_Man_t * p, const char * format, ...){
+    int max_path_size = 200;
+    va_list args;
+    va_start(args, format);
+    char cwd[max_path_size];
+    memset(cwd, 0, max_path_size);
+    strcat(cwd, "./");
+    strcat(cwd, p->pAig->pName);
+    strcat(cwd, "_");
+    strcat(cwd, "stats_michal.csv");
+    FILE *fp = fopen(cwd, "a+");
+    vfprintf(fp, format, args);
+    fclose(fp);
+}
+
+
+
+
+
+
 ABC_NAMESPACE_IMPL_END
 

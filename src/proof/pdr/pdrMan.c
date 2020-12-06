@@ -393,6 +393,8 @@ void Pdr_ManStop( Pdr_Man_t * p )
         Aig_ManFanoutStop( p->pAig );
     if ( p->pAig->pTerSimData != NULL )
         ABC_FREE( p->pAig->pTerSimData );
+    if (p->pTable)
+        Pdr_CubeTableStop(p->pTable);
     ABC_FREE( p );
 }
 

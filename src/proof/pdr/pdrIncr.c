@@ -552,6 +552,7 @@ int IPdr_ManSolveInt( Pdr_Man_t * p, int fCheckClauses, int fPushClauses )
                 }
                 if ( RetValue == 0 )
                 {
+                    assert(false);
                     RetValue = Pdr_ManBlockCube( p, pCube );
                     if ( RetValue == -1 )
                     {
