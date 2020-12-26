@@ -21,10 +21,7 @@
 #ifndef ABC__sat__pdr__pdrInt_h
 #define ABC__sat__pdr__pdrInt_h
 
-////////////////////////////////////////////////////////////////////////
-///                          INCLUDES                                ///
-////////////////////////////////////////////////////////////////////////
-
+// region INCLUDES
 #include "aig/saig/saig.h"
 #include "misc/vec/vecWec.h"
 #include "sat/cnf/cnf.h"
@@ -34,8 +31,6 @@
 #include "string.h"
 #include "unistd.h"
 #include "stdbool.h"
-
-//#define PDR_USE_SATOKO 1
 
 #ifndef PDR_USE_SATOKO
     #include "sat/bsat/satSolver.h"
@@ -61,15 +56,11 @@
     #define sat_solver_compress(s)
 #endif
 
+// endregion
+
 ABC_NAMESPACE_HEADER_START
 
-////////////////////////////////////////////////////////////////////////
-///                         PARAMETERS                               ///
-////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////
-///                         BASIC TYPES                              ///
-////////////////////////////////////////////////////////////////////////
+// region BASIC TYPES
 
 // region type definitions
 typedef struct Txs_Man_t_  Txs_Man_t;
@@ -217,10 +208,9 @@ struct Pdr_CubeTableNode_ {
 // endregion
 // endregion
 
-////////////////////////////////////////////////////////////////////////
-///                      MACRO DEFINITIONS                           ///
-////////////////////////////////////////////////////////////////////////
+// endregion
 
+// region MACRO DEFINITIONS
 static inline sat_solver * Pdr_ManSolver( Pdr_Man_t * p, int k )  { return (sat_solver *)Vec_PtrEntry(p->vSolvers, k); }
 
 static inline abctime      Pdr_ManTimeLimit( Pdr_Man_t * p )
@@ -233,15 +223,9 @@ static inline abctime      Pdr_ManTimeLimit( Pdr_Man_t * p )
         return p->timeToStop;
     return p->timeToStopOne;
 }
+// endregion
 
-void Pdr_Write_to_stats(Pdr_Man_t * p, const char * format, ...); // @Michal
-void Pdr_Init_queue_write_to_stats(Pdr_Man_t * p);
-void Pdr_table_Write_to_stats(Pdr_Man_t * p, const char * format, ...); // @Michal
-void Pdr_Init_table_write_to_stats(Pdr_Man_t * p);
-
-////////////////////////////////////////////////////////////////////////
-///                    FUNCTION DECLARATIONS                         ///
-////////////////////////////////////////////////////////////////////////
+// region FUNCTION DECLARATIONS
 
 // region === pdrCnf.c ==========================================================
 extern int             Pdr_ObjSatVar( Pdr_Man_t * p, int k, int Pol, Aig_Obj_t * pObj );
@@ -322,6 +306,8 @@ extern void            Pdr_QueueStop( Pdr_Man_t * p );
 // endregion
 
 // region POG methods
+void Pdr_Write_to_stats(Pdr_Man_t * p, const char * format, ...); // @Michal
+void Pdr_Init_queue_write_to_stats(Pdr_Man_t * p);
 extern Pdr_POGNode *  Pdr_POGNodeRef(Pdr_POGNode * tn );
 extern Pdr_POGNode *  Pdr_POGNodeStart(Pdr_Set_t * pState, Pdr_POGNode * pSucc );
 extern void            Pdr_POGNodeDeref(Pdr_POGNode * tn );
@@ -335,6 +321,8 @@ extern Pdr_POG *      Pdr_POGStart();
 // endregion
 
 // region Proof Obligation Table
+void Pdr_table_Write_to_stats(Pdr_Man_t * p, const char * format, ...); // @Michal
+void Pdr_Init_table_write_to_stats(Pdr_Man_t * p);
 extern Pdr_CubeTable * Pdr_CubeTableStart();
 extern Pdr_CubeTableNode * Pdr_CubeTableNodeStart(Pdr_Set_t * state);
 extern void            Pdr_CubeTableNodeStop(Pdr_CubeTableNode * ctn);
@@ -342,16 +330,13 @@ extern void Pdr_CubeTableInsert(Pdr_CubeTable * t, Pdr_CubeTableNode * c);
 extern void Pdr_CubeTableStop(Pdr_CubeTable * t);
 extern bool Are_states_identical(Pdr_Set_t * first, Pdr_Set_t * second);
 extern Pdr_CubeTableNode * Pdr_CubeTableFindNode(Pdr_CubeTableNode * current, Pdr_Set_t * state);
-extern void Pdr_CubeTableUpdate( Pdr_CubeTable * t, Pdr_POGNode * pog_node);
+extern void Pdr_CubeTableUpdateCellAndParents(Pdr_CubeTable * t, Pdr_POGNode * pog_node);
+extern void Pdr_CubeTableUpdateCell(Pdr_CubeTable * t, Pdr_Set_t * cube);
 extern void Pdr_TablePrint( Pdr_Man_t * p );
+// endregion
+
 // endregion
 
 ABC_NAMESPACE_HEADER_END
 
-
 #endif
-
-////////////////////////////////////////////////////////////////////////
-///                       END OF FILE                                ///
-////////////////////////////////////////////////////////////////////////
-

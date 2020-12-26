@@ -933,7 +933,8 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube ) {
         }
         pThis = Pdr_QueuePop( p );  // [@Michal extraction of s #106]
         Pdr_POGNode * pog_node = Pdr_POGFindNode(t->root, pThis->pState);
-        Pdr_CubeTableUpdate(p->pTable, pog_node);
+        //Pdr_CubeTableUpdateCellAndParents(p->pTable, pog_node); [@Michal]
+
         assert( pThis->iFrame > 0 );
         assert( !Pdr_SetIsInit(pThis->pState, -1) );
         p->iUseFrame = Abc_MinInt( p->iUseFrame, pThis->iFrame );
@@ -962,9 +963,10 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube ) {
         // check if the cube holds with relative induction
         pCubeMin = NULL;
         RetValue = Pdr_ManGeneralize( p, pThis->iFrame-1, pThis->pState, &pPred, &pCubeMin ); // [@Michal invocation of inductivelyGeneralize #111]
+
         // [@Michal]
         if (pPred){
-            Pdr_POGInsert(t, pPred, pThis->pState);
+            Pdr_POGInsert(t, pPred, pCubeMin);
         }
 
         if ( RetValue == -1 ) // resource limit is reached
@@ -1027,6 +1029,8 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube ) {
         {
             assert( pCubeMin == NULL );
             assert( pPred != NULL );
+            //Pdr_CubeTableUpdateCell(p->pTable, pThis->pState);  // [@Michal]
+            // // To POG
             pThis->prio = Prio--;
             Pdr_QueuePush( p, pThis );
             pThis = Pdr_OblStart( pThis->iFrame-1, Prio--, pPred, Pdr_OblRef(pThis) );
@@ -1085,7 +1089,7 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
     // create the first timeframe
     p->pPars->timeLastSolved = Abc_Clock();
     Pdr_ManCreateSolver( p, (iFrame = 0) );
-    Pdr_Init_queue_write_to_stats(p);
+    //Pdr_Init_queue_write_to_stats(p);
 
 
     while ( 1 )
@@ -1414,6 +1418,10 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
     //assert( 0 );
     return -1;
 }
+
+
+
+
 
 /**Function*************************************************************
 

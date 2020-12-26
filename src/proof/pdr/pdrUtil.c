@@ -996,14 +996,9 @@ Pdr_CubeTableNode * Pdr_CubeTableFindNode(Pdr_CubeTableNode * current, Pdr_Set_t
     return Pdr_CubeTableFindNode(current->next, state);
 }
 
-void Pdr_CubeTableUpdate( Pdr_CubeTable * t, Pdr_POGNode * pog_node)
+void Pdr_CubeTableUpdateCellAndParents(Pdr_CubeTable * t, Pdr_POGNode * pog_node)
 {
-    Pdr_CubeTableNode * ctn = Pdr_CubeTableFindNode(t->first, pog_node->pState);
-    if ( ctn ){
-        ctn->countRef++;
-    } else {
-        Pdr_CubeTableInsert(t, Pdr_CubeTableNodeStart(pog_node->pState));
-    }
+    Pdr_CubeTableUpdateCell(t, pog_node->pState);
     for (Pdr_POGNode * succ = pog_node->pSucc; succ; succ = succ->pSucc){
         Pdr_CubeTableNode * succ_ctn = Pdr_CubeTableFindNode(t->first, succ->pState);
         if (! succ_ctn){
@@ -1012,7 +1007,15 @@ void Pdr_CubeTableUpdate( Pdr_CubeTable * t, Pdr_POGNode * pog_node)
         }
         succ_ctn->countRef++;
     }
+}
 
+void Pdr_CubeTableUpdateCell(Pdr_CubeTable * t, Pdr_Set_t * cube){
+    Pdr_CubeTableNode * ctn = Pdr_CubeTableFindNode(t->first, cube);
+    if ( ctn ){
+        ctn->countRef++;
+    } else {
+        Pdr_CubeTableInsert(t, Pdr_CubeTableNodeStart(cube));
+    }
 }
 
 void Pdr_TablePrint( Pdr_Man_t * p )
