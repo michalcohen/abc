@@ -879,6 +879,7 @@ Pdr_POGNode * Pdr_POGFindNode(Pdr_POGNode * current, Pdr_Set_t * state){
     }
     return NULL;
 }
+
 /**Function*************************************************************
 
   Synopsis    []
@@ -948,7 +949,8 @@ Pdr_CubeTable * Pdr_CubeTableStart(){
     t = ABC_ALLOC( Pdr_CubeTable, 1 );
     t->first = NULL;
 }
-
+// TODO [@Michal] Sort Table
+// When new cloase that already contains exiting clauses - add their count to his.
 Pdr_CubeTableNode * Pdr_CubeTableNodeStart(Pdr_Set_t * state){
     Pdr_CubeTableNode  * n = ABC_ALLOC(Pdr_CubeTableNode, 1);
     n->pState = state;
@@ -1185,9 +1187,6 @@ void Pdr_table_Write_to_stats(Pdr_Man_t * p, const char * format, ...){
     vfprintf(fp, format, args);
     fclose(fp);
 }
-
-
-
 
 
 
