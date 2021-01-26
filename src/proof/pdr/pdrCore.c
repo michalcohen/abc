@@ -252,7 +252,7 @@ int Pdr_ManPushClauses( Pdr_Man_t * p )
   SeeAlso     []
 
 ***********************************************************************/
-int Pdr_ManCheckContainment( Pdr_Man_t * p, int k, Pdr_Set_t * pSet )
+Pdr_Set_t * Pdr_ManCheckContainment( Pdr_Man_t * p, int k, Pdr_Set_t * pSet )
 {
     Pdr_Set_t * pThis;
     Vec_Ptr_t * vArrayK;
@@ -260,8 +260,8 @@ int Pdr_ManCheckContainment( Pdr_Man_t * p, int k, Pdr_Set_t * pSet )
     Vec_VecForEachLevelStartStop( p->vClauses, vArrayK, i, k, kMax+1 )
         Vec_PtrForEachEntry( Pdr_Set_t *, vArrayK, pThis, j )
             if ( Pdr_SetContains( pSet, pThis ) )
-                return 1;
-    return 0;
+                return pThis; // [@Michal]
+    return NULL;
 }
 
 
@@ -949,8 +949,10 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube ) {
         assert( !Pdr_SetIsInit(pThis->pState, -1) );
         p->iUseFrame = Abc_MinInt( p->iUseFrame, pThis->iFrame );
         clk = Abc_Clock();
-        if ( Pdr_ManCheckContainment( p, pThis->iFrame, pThis->pState ) )
+        Pdr_Set_t * contained_cube = Pdr_ManCheckContainment(p, pThis->iFrame, pThis->pState ); // [@Michal]
+        if ( contained_cube )
         {
+            // Pdr_CubeTableUpdateCell(p->pTable, contained_cube); // [@Michal]
             p->tContain += Abc_Clock() - clk;
             Pdr_OblDeref( pThis );
             continue;

@@ -234,7 +234,7 @@ extern int             Pdr_ManFreeVar( Pdr_Man_t * p, int k );
 extern sat_solver *    Pdr_ManNewSolver( sat_solver * pSat, Pdr_Man_t * p, int k, int fInit );
 // endregion
 // region === pdrCore.c ==========================================================
-extern int             Pdr_ManCheckContainment( Pdr_Man_t * p, int k, Pdr_Set_t * pSet );
+extern Pdr_Set_t *             Pdr_ManCheckContainment( Pdr_Man_t * p, int k, Pdr_Set_t * pSet );
 // endregion
 // region === pdrInv.c ==========================================================
 extern Vec_Int_t *     Pdr_ManCountFlopsInv( Pdr_Man_t * p );
