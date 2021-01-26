@@ -1023,8 +1023,11 @@ void Pdr_CubeTableUpdateCell(Pdr_CubeTable * t, Pdr_Set_t * cube){
 void Pdr_TablePrint( Pdr_Man_t * p )
 {
     Pdr_CubeTableNode * pNode;
-    for ( pNode = p->pTable->first; pNode; pNode = pNode->next )
-        Pdr_table_Write_to_stats(  p,"%p,%d\n", pNode->pState, pNode->countRef );
+    int total_count = 0;
+    for ( pNode = p->pTable->first; pNode; pNode = pNode->next ) {
+        total_count = Pdr_Get_total_counter(p->pTable, pNode->pState);
+        Pdr_table_Write_to_stats(p, "%p,%d\n", pNode->pState, total_count);
+    }
 }
 
 void Pdr_CubeTableStop(Pdr_CubeTable * t){
@@ -1035,6 +1038,19 @@ void Pdr_CubeTableStop(Pdr_CubeTable * t){
         pNode = next;
     }
     ABC_FREE(t);
+}
+
+int Pdr_Get_total_counter(Pdr_CubeTable * t, Pdr_Set_t * state){
+    int count = 0;
+    Pdr_CubeTableNode * pNodeTmp;
+    for ( pNodeTmp = t->first; pNodeTmp; pNodeTmp = pNodeTmp->next ){
+        if (Pdr_SetContains( state, pNodeTmp->pState )){
+//            if (!Are_states_identical(state, pNode->pState))
+//                printf("containment found!");
+            count += pNodeTmp->countRef;
+        }
+    }
+    return count;
 }
 // endregion
 

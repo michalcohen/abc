@@ -319,6 +319,7 @@ extern Pdr_POGNode *  Pdr_POGFindNode(Pdr_POGNode * current, Pdr_Set_t * state);
 extern void            Pdr_POGInsert(Pdr_POG * t, Pdr_Set_t * state, Pdr_Set_t * succ );
 extern void            Pdr_POGPrint(Pdr_POGNode * tn, int level );
 extern Pdr_POG *      Pdr_POGStart();
+extern int             Pdr_Get_total_counter(Pdr_CubeTable * t, Pdr_Set_t * state);
 // endregion
 
 // region Proof Obligation Table
