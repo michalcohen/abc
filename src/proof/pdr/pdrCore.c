@@ -1077,6 +1077,11 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube ) {
     return 1;
 }
 
+// [@Michal]
+int ProveTmpProperty(Pdr_Man_t * p){
+    return 0;
+}
+
 /**Function*************************************************************
 
   Synopsis    []
@@ -1201,6 +1206,9 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
             // region try to solve this output [@Michal strengthen]
             while ( 1 )
             {
+                ProveTmpProperty(p);
+
+                // region Timeout
                 if ( p->pPars->nTimeOutGap && p->pPars->timeLastSolved && Abc_Clock() > p->pPars->timeLastSolved + p->pPars->nTimeOutGap * CLOCKS_PER_SEC )
                 {
                     if ( p->pPars->fVerbose )

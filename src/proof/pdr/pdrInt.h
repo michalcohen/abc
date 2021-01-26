@@ -116,7 +116,8 @@ struct Pdr_Man_t_
     Vec_Ptr_t * vSolvers;  // SAT solvers
     Vec_Vec_t * vClauses;  // clauses by timeframe
     Pdr_Obl_t * pQueue;    // proof obligations
-    Pdr_CubeTable * pTable; // List of proof obligations and their number of references
+    Pdr_CubeTable * pTable; // [@Michal] List of proof obligations and their number of references
+    //Pdr_POG * pPog; // [@Michal] POG
     int *       pOrder;    // ordering of the lits
     Vec_Int_t * vActVars;  // the counter of activation variables
     int         iUseFrame; // the first used frame
